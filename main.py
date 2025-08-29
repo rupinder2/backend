@@ -2,22 +2,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
-import os
 from config import settings
 from routers import auth_router
 from routers.documents import router as documents_router
-from mangum import Mangum
 
-# Validate configuration on startup (but be graceful for Vercel)
+# Validate configuration on startup
 try:
     settings.validate()
 except ValueError as e:
-    if settings.IS_VERCEL:
-        print(f"Configuration warning in Vercel: {e}")
-        print("The app may not work properly until environment variables are set")
-    else:
-        print(f"Configuration error: {e}")
-        exit(1)
+    print(f"Configuration error: {e}")
+    exit(1)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -28,26 +22,10 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS for production and development
-allowed_origins = [
-    "http://localhost:3000",  # Local development
-    "https://localhost:3000", # Local development with SSL
-]
-
-# Add production frontend URL if available
-if settings.FRONTEND_URL:
-    allowed_origins.append(settings.FRONTEND_URL)
-
-# For Vercel deployments, allow Vercel preview URLs
-if os.getenv("VERCEL"):
-    allowed_origins.extend([
-        "https://*.vercel.app",
-        "https://*.vercel.sh"
-    ])
-
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=[settings.FRONTEND_URL, "http://localhost:3000", "https://front-end-delta-lac-93.vercel.app"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -99,10 +77,6 @@ async def internal_error_handler(request, exc):
         status_code=500,
         content={"message": "Internal server error"}
     )
-
-# Vercel serverless function handler
-from mangum import Mangum
-handler = Mangum(app, lifespan="off")
 
 if __name__ == "__main__":
     uvicorn.run(

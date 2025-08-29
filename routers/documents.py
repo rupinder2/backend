@@ -12,7 +12,7 @@ from models.document import (
     UploadUrlResponse, DocumentCreate, UploadStatus, BulkDeleteRequest
 )
 from services.file_processor import file_processor
-from supabase_client import get_supabase_admin
+from supabase_client import supabase_admin
 import aiofiles
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -62,7 +62,7 @@ async def upload_document(
             }
             
             # Insert document record
-            result = get_supabase_admin().table("document_metadata").insert(document_data).execute()
+            result = supabase_admin.table("document_metadata").insert(document_data).execute()
             
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create document record")
@@ -70,7 +70,7 @@ async def upload_document(
             document_id = result.data[0]["id"]
             
             # Upload file to Supabase storage
-            storage_result = get_supabase_admin().storage.from_("documents").upload(
+            storage_result = supabase_admin.storage.from_("documents").upload(
                 path=storage_path,
                 file=file_content,
                 file_options={"content-type": mime_type}
@@ -79,11 +79,11 @@ async def upload_document(
             # Check for storage upload errors - the error might be in different formats
             if hasattr(storage_result, 'error') and storage_result.error:
                 # Clean up database record if storage upload fails
-                get_supabase_admin().table("document_metadata").delete().eq("id", document_id).execute()
+                supabase_admin.table("document_metadata").delete().eq("id", document_id).execute()
                 raise HTTPException(status_code=500, detail=f"Storage upload failed: {storage_result.error}")
             elif not hasattr(storage_result, 'path') and not hasattr(storage_result, 'full_path'):
                 # If we don't have expected success indicators, treat as error
-                get_supabase_admin().table("document_metadata").delete().eq("id", document_id).execute()
+                supabase_admin.table("document_metadata").delete().eq("id", document_id).execute()
                 raise HTTPException(status_code=500, detail="Storage upload failed - unexpected response format")
             
             # Process file and update metadata
@@ -99,7 +99,7 @@ async def upload_document(
                 update_data["metadata"]["extracted_text"] = processing_result.extracted_text
             
             # Update document record with processing results
-            updated_result = get_supabase_admin().table("document_metadata").update(update_data).eq("id", document_id).execute()
+            updated_result = supabase_admin.table("document_metadata").update(update_data).eq("id", document_id).execute()
             
             if not updated_result.data:
                 raise HTTPException(status_code=500, detail="Failed to update document record")
@@ -129,13 +129,13 @@ async def list_documents(
         offset = (page - 1) * limit
         
         # Build query
-        query = get_supabase_admin().table("document_metadata").select("*").eq("user_id", user_id)
+        query = supabase_admin.table("document_metadata").select("*").eq("user_id", user_id)
         
         if status:
             query = query.eq("upload_status", status.value)
         
         # Get total count
-        count_result = get_supabase_admin().table("document_metadata").select("id", count="exact").eq("user_id", user_id)
+        count_result = supabase_admin.table("document_metadata").select("id", count="exact").eq("user_id", user_id)
         if status:
             count_result = count_result.eq("upload_status", status.value)
         total = count_result.execute().count or 0
@@ -164,7 +164,7 @@ async def get_document(
     try:
         user_id = current_user["user_id"]
         
-        result = get_supabase_admin().table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
+        result = supabase_admin.table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
         
         if not result.data:
             raise HTTPException(status_code=404, detail="Document not found")
@@ -186,7 +186,7 @@ async def download_document(
         user_id = current_user["user_id"]
         
         # Get document metadata
-        result = get_supabase_admin().table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
+        result = supabase_admin.table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
         
         if not result.data:
             raise HTTPException(status_code=404, detail="Document not found")
@@ -195,7 +195,7 @@ async def download_document(
         
         # Generate download URL (expires in 1 hour)
         try:
-            download_result = get_supabase_admin().storage.from_("documents").create_signed_url(
+            download_result = supabase_admin.storage.from_("documents").create_signed_url(
                 path=document["storage_path"],
                 expires_in=3600
             )
@@ -231,7 +231,7 @@ async def update_document(
         user_id = current_user["user_id"]
         
         # Check if document exists and belongs to user
-        existing = get_supabase_admin().table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
+        existing = supabase_admin.table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
         
         if not existing.data:
             raise HTTPException(status_code=404, detail="Document not found")
@@ -247,7 +247,7 @@ async def update_document(
             raise HTTPException(status_code=400, detail="No valid fields to update")
         
         # Update document
-        result = get_supabase_admin().table("document_metadata").update(update_dict).eq("id", document_id).execute()
+        result = supabase_admin.table("document_metadata").update(update_dict).eq("id", document_id).execute()
         
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to update document")
@@ -269,7 +269,7 @@ async def delete_document(
         user_id = current_user["user_id"]
         
         # Get document metadata
-        result = get_supabase_admin().table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
+        result = supabase_admin.table("document_metadata").select("*").eq("id", document_id).eq("user_id", user_id).execute()
         
         if not result.data:
             raise HTTPException(status_code=404, detail="Document not found")
@@ -278,14 +278,14 @@ async def delete_document(
         
         # Delete file from storage
         try:
-            storage_result = get_supabase_admin().storage.from_("documents").remove([document["storage_path"]])
+            storage_result = supabase_admin.storage.from_("documents").remove([document["storage_path"]])
             # storage_result is a list, no error checking needed for successful calls
         except Exception as storage_error:
             # Log error but continue with database deletion
             print(f"Warning: Failed to delete file from storage: {storage_error}")
         
         # Delete database record
-        delete_result = get_supabase_admin().table("document_metadata").delete().eq("id", document_id).execute()
+        delete_result = supabase_admin.table("document_metadata").delete().eq("id", document_id).execute()
         
         if not delete_result.data:
             raise HTTPException(status_code=500, detail="Failed to delete document record")
@@ -311,7 +311,7 @@ async def bulk_delete_documents(
             raise HTTPException(status_code=400, detail="No document IDs provided")
         
         # Get documents that belong to the user
-        result = get_supabase_admin().table("document_metadata").select("*").eq("user_id", user_id).in_("id", document_ids).execute()
+        result = supabase_admin.table("document_metadata").select("*").eq("user_id", user_id).in_("id", document_ids).execute()
         
         if not result.data:
             raise HTTPException(status_code=404, detail="No documents found")
@@ -322,13 +322,13 @@ async def bulk_delete_documents(
         # Delete files from storage
         if storage_paths:
             try:
-                storage_result = get_supabase_admin().storage.from_("documents").remove(storage_paths)
+                storage_result = supabase_admin.storage.from_("documents").remove(storage_paths)
                 # storage_result is a list, no error checking needed for successful calls
             except Exception as storage_error:
                 print(f"Warning: Storage deletion failed: {storage_error}")
         
         # Delete database records
-        delete_result = get_supabase_admin().table("document_metadata").delete().in_("id", found_ids).execute()
+        delete_result = supabase_admin.table("document_metadata").delete().in_("id", found_ids).execute()
         
         if not delete_result.data:
             raise HTTPException(status_code=500, detail="Failed to delete document records from database")

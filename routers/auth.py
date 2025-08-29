@@ -3,7 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from typing import Dict, Any
 from auth import get_current_user, get_current_user_id, validate_token_only
 from models import UserResponse, TokenValidationResponse
-from supabase_client import get_supabase_admin
+from supabase_client import supabase_admin
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -74,7 +74,7 @@ async def get_user_profile(
     """
     try:
         # Get user details from Supabase auth
-        user_response = get_supabase_admin().auth.admin.get_user_by_id(user_id)
+        user_response = supabase_admin.auth.admin.get_user_by_id(user_id)
         
         if user_response.user:
             return {
