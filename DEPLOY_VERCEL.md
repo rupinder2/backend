@@ -60,6 +60,8 @@ After deployment, test these endpoints:
 
 ✅ **Fixed Supabase Client Error**: Replaced module-level initialization with lazy loading  
 ✅ **Fixed Dependency Versions**: Pinned compatible versions for Vercel  
+✅ **Fixed JWT Import Error**: Replaced `jwt` with `PyJWT` package  
+✅ **Fixed Vercel Handler Error**: Moved handler to `api/index.py` with proper structure  
 ✅ **Improved Error Handling**: Graceful config validation for Vercel environment  
 ✅ **Enhanced CORS**: Better handling of Vercel preview URLs  
 

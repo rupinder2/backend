@@ -100,8 +100,7 @@ async def internal_error_handler(request, exc):
         content={"message": "Internal server error"}
     )
 
-# Vercel serverless function handler
-handler = Mangum(app)
+# Vercel serverless function handler moved to api/index.py
 
 if __name__ == "__main__":
     uvicorn.run(
