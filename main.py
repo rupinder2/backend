@@ -23,9 +23,16 @@ app = FastAPI(
 )
 
 # Configure CORS
+allowed_origins = [
+    settings.FRONTEND_URL,
+    "http://localhost:3000",
+    "https://front-end-delta-lac-93.vercel.app",
+    "*"  # Allow all origins for now
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:3000", "https://front-end-delta-lac-93.vercel.app"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -34,6 +41,10 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
+
+# Also include routers without /api prefix for direct access
+app.include_router(auth_router, prefix="", tags=["Auth Direct"])
+app.include_router(documents_router, prefix="", tags=["Documents Direct"])
 
 @app.get("/")
 async def root():
