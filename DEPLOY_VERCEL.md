@@ -49,9 +49,10 @@ After deployment, test these endpoints:
 
 ## Files Modified for Vercel Deployment
 
-- `vercel.json` - Vercel configuration (simplified)
-- `requirements.txt` - Fixed dependency versions, added `mangum`
-- `main.py` - Added Mangum handler and improved CORS + graceful config validation
+- `api/main.py` - **NEW**: FastAPI app following Vercel's required structure
+- `vercel.json` - Vercel configuration pointing to `api/main.py`
+- `requirements.txt` - Pinned dependency versions (removed `mangum` - not needed)
+- `.vercelignore` - **NEW**: Exclude unnecessary files from deployment
 - `supabase_client.py` - **FIXED**: Lazy initialization to prevent module-level errors
 - `config.py` - Enhanced environment detection and validation
 - `routers/*.py` - Updated to use lazy Supabase client functions
@@ -61,7 +62,9 @@ After deployment, test these endpoints:
 ✅ **Fixed Supabase Client Error**: Replaced module-level initialization with lazy loading  
 ✅ **Fixed Dependency Versions**: Pinned compatible versions for Vercel  
 ✅ **Fixed JWT Import Error**: Replaced `jwt` with `PyJWT` package  
-✅ **Fixed Vercel Handler Error**: Moved handler to `api/index.py` with proper structure  
+✅ **CRITICAL: Fixed Project Structure**: Moved FastAPI app to `api/main.py` (Vercel requirement)  
+✅ **Removed Mangum**: Vercel handles ASGI natively, no adapter needed  
+✅ **Added .vercelignore**: Optimized deployment size  
 ✅ **Improved Error Handling**: Graceful config validation for Vercel environment  
 ✅ **Enhanced CORS**: Better handling of Vercel preview URLs  
 
