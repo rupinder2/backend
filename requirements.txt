@@ -8,7 +8,7 @@ httpx
 pydantic
 aiofiles
 mangum
-jwt
+PyJWT
 pydantic[email]
 gotrue
 postgrest
