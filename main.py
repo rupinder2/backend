@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 from config import settings
 from routers import auth_router
-from routers.documents import router as documents_router
+from routers.books import router as books_router
 
 # Validate configuration on startup
 try:
@@ -15,8 +15,8 @@ except ValueError as e:
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Email OTP Authentication API",
-    description="FastAPI backend with Supabase email OTP authentication",
+    title="Library Management System API",
+    description="FastAPI backend for Mini Library Management System with Supabase authentication",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -40,19 +40,20 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix="/api")
-app.include_router(documents_router, prefix="/api")
+app.include_router(books_router, prefix="/api")
 
 # Also include routers without /api prefix for direct access
 app.include_router(auth_router, prefix="", tags=["Auth Direct"])
-app.include_router(documents_router, prefix="", tags=["Documents Direct"])
+app.include_router(books_router, prefix="", tags=["Books Direct"])
 
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
-        "message": "Email OTP Authentication API",
+        "message": "Library Management System API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
+        "features": ["Book Management", "Check-in/Check-out", "Search", "AI Recommendations"]
     }
 
 @app.get("/health")

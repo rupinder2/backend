@@ -12,3 +12,4 @@ PyJWT
 pydantic[email]
 gotrue
 postgrest
+openai

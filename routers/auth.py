@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from typing import Dict, Any
-from auth import get_current_user, get_current_user_id, validate_token_only
+from auth.dependencies import get_current_user, get_current_user_id, validate_token_only
 from models import UserResponse, TokenValidationResponse
 from supabase_client import supabase_admin
 
