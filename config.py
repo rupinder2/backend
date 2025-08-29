@@ -12,10 +12,14 @@ class Settings:
     
     # API Configuration
     API_HOST = os.getenv("API_HOST", "0.0.0.0")
-    API_PORT = int(os.getenv("API_PORT", "8000"))
+    API_PORT = int(os.getenv("API_PORT", os.getenv("PORT", "8000")))
     
-    # CORS Configuration
+    # CORS Configuration - Handle Vercel deployment URLs
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    
+    # Environment detection
+    IS_VERCEL = os.getenv("VERCEL") == "1"
+    IS_PRODUCTION = os.getenv("VERCEL_ENV") == "production"
     
     def validate(self):
         """Validate that all required environment variables are set"""
