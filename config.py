@@ -32,10 +32,14 @@ class Settings:
         
         missing_vars = []
         for var in required_vars:
-            if not getattr(self, var):
+            value = getattr(self, var)
+            if not value or value.strip() == "":
                 missing_vars.append(var)
         
         if missing_vars:
+            if self.IS_VERCEL:
+                print(f"Warning: Missing environment variables in Vercel: {', '.join(missing_vars)}")
+                print("Please set these in your Vercel project settings")
             raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
         
         return True

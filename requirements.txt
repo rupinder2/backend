@@ -1,7 +1,7 @@
 fastapi
-uvicorn[standard]
+uvicorn
 python-dotenv
-supabase==2.3.0
+supabase
 python-jose[cryptography]
 python-multipart
 httpx
@@ -10,3 +10,5 @@ aiofiles
 mangum
 jwt
 pydantic[email]
+gotrue
+postgrest

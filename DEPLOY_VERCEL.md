@@ -45,16 +45,36 @@ After deployment, test these endpoints:
 2. **Cold Starts**: First request might be slower due to cold start
 3. **File Uploads**: Large file uploads might timeout (15s limit for Hobby plan)
 4. **CORS**: Configured to allow Vercel preview URLs automatically
+5. **Lazy Loading**: Supabase clients are initialized lazily to avoid serverless issues
 
-## Files Added for Vercel Deployment
+## Files Modified for Vercel Deployment
 
-- `vercel.json` - Vercel configuration
-- `requirements.txt` - Updated with `mangum` for ASGI compatibility
-- `main.py` - Updated with Mangum handler and improved CORS
+- `vercel.json` - Vercel configuration (simplified)
+- `requirements.txt` - Fixed dependency versions, added `mangum`
+- `main.py` - Added Mangum handler and improved CORS + graceful config validation
+- `supabase_client.py` - **FIXED**: Lazy initialization to prevent module-level errors
+- `config.py` - Enhanced environment detection and validation
+- `routers/*.py` - Updated to use lazy Supabase client functions
+
+## Recent Fixes Applied
+
+✅ **Fixed Supabase Client Error**: Replaced module-level initialization with lazy loading  
+✅ **Fixed Dependency Versions**: Pinned compatible versions for Vercel  
+✅ **Improved Error Handling**: Graceful config validation for Vercel environment  
+✅ **Enhanced CORS**: Better handling of Vercel preview URLs  
 
 ## Troubleshooting
 
-1. **Build Fails**: Check that all dependencies are in requirements.txt
+1. **Build Fails**: Check that all dependencies are in requirements.txt with correct versions
 2. **Environment Variables**: Ensure all required env vars are set in Vercel dashboard
 3. **CORS Issues**: Frontend URL should be added to FRONTEND_URL env var
 4. **Supabase Connection**: Test /health endpoint to verify Supabase configuration
+5. **Import Errors**: All imports now use lazy initialization to prevent serverless issues
+
+## Quick Deploy Script
+
+Run the deployment script:
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```

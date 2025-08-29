@@ -8,12 +8,16 @@ from routers import auth_router
 from routers.documents import router as documents_router
 from mangum import Mangum
 
-# Validate configuration on startup
+# Validate configuration on startup (but be graceful for Vercel)
 try:
     settings.validate()
 except ValueError as e:
-    print(f"Configuration error: {e}")
-    exit(1)
+    if settings.IS_VERCEL:
+        print(f"Configuration warning in Vercel: {e}")
+        print("The app may not work properly until environment variables are set")
+    else:
+        print(f"Configuration error: {e}")
+        exit(1)
 
 # Initialize FastAPI app
 app = FastAPI(
