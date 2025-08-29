@@ -12,7 +12,7 @@ from models.document import (
     UploadUrlResponse, DocumentCreate, UploadStatus, BulkDeleteRequest
 )
 from services.file_processor import file_processor
-from supabase_client import get_get_supabase_admin()
+from supabase_client import get_supabase_admin
 import aiofiles
 
 router = APIRouter(prefix="/documents", tags=["documents"])
