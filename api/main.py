@@ -5,17 +5,32 @@ import os
 import sys
 
 # Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 
-from config import settings
-from routers import auth_router
-from routers.documents import router as documents_router
+try:
+    from config import settings
+    from routers import auth_router
+    from routers.documents import router as documents_router
+except ImportError as e:
+    print(f"Import error: {e}")
+    # Create minimal settings for fallback
+    class FallbackSettings:
+        SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+        SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+        FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        IS_VERCEL = os.getenv("VERCEL") == "1"
+    settings = FallbackSettings()
+    auth_router = None
+    documents_router = None
 
 # Validate configuration on startup (but be graceful for Vercel)
 try:
-    settings.validate()
-except ValueError as e:
-    if settings.IS_VERCEL:
+    if hasattr(settings, 'validate'):
+        settings.validate()
+except (ValueError, AttributeError) as e:
+    if hasattr(settings, 'IS_VERCEL') and settings.IS_VERCEL:
         print(f"Configuration warning in Vercel: {e}")
         print("The app may not work properly until environment variables are set")
     else:
@@ -55,9 +70,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth_router, prefix="/api")
-app.include_router(documents_router, prefix="/api")
+# Include routers (only if successfully imported)
+if auth_router:
+    app.include_router(auth_router, prefix="/api")
+if documents_router:
+    app.include_router(documents_router, prefix="/api")
 
 @app.get("/")
 async def root():
